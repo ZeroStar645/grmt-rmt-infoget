@@ -38,7 +38,7 @@ class EarthMonitorPlugin(Star):
                 ]
                 nodes = await asyncio.gather(*tasks)
 
-            chain = [Comp.Plain("RMT v3 当前数据\n（2分钟延迟，仅供参考）"),Comp.Plain("10~50s")]
+            chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）"),Comp.Plain("\n10~50s")]
             for node in nodes: chain.extend(node)
             yield event.chain_result(chain)
             return
@@ -95,7 +95,7 @@ class EarthMonitorPlugin(Star):
 
                     # 组装消息链
                     # \u3000 是全角空格，能有效防止 NTQQ 客户端将紧随其后的文本与上方合并
-                    chain = [Comp.Plain(f"GRMT v3 历史报告\n{title}\n\u3000"),Comp.Plain("10s")]
+                    chain = [Comp.Plain(f"GRMT v3 历史报告\n{title}\n"),Comp.Plain("\n10s")]
                     for node in nodes:
                         chain.extend(node)
 
