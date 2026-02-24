@@ -20,6 +20,8 @@ class EarthMonitorPlugin(Star):
         try:
             resp = await client.get(url, timeout=10.0)
             if resp.status_code == 200:
+                # 修复换行问题：在标签前加一个 \n 和一个全角空格 \u3000
+                # 这样可以防止平台将连续的文本组件合并
                 return [Comp.Plain(f"\n{label}\n"), Comp.Image.fromBytes(resp.content)]
         except Exception as e:
             logger.error(f"下载 {label} 失败: {e}")
