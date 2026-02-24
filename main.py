@@ -30,7 +30,7 @@ class EarthMonitorPlugin(Star):
     @filter.command("grmt")
     async def grmt_now(self, event: AstrMessageEvent, arg: str = ""):
         if arg != "now": return
-        
+        yield event.plain_result("处理图片中，请稍后..")
         tasks_info = [
             ("BHZ", "https://grmt.earth.sinica.edu.tw/grmt_z.png"),
             ("BHN", "https://grmt.earth.sinica.edu.tw/grmt_n.png"),
@@ -51,7 +51,7 @@ class EarthMonitorPlugin(Star):
     @filter.command("rmt")
     async def rmt_now(self, event: AstrMessageEvent, arg: str = ""):
         if arg != "now": return
-        
+        yield event.plain_result("处理图片中，请稍后..")
         tasks_info = [
             ("10~50s", "https://rmt.earth.sinica.edu.tw/rmt_10s.png"),
             ("20~50s", "https://rmt.earth.sinica.edu.tw/rmt_20s.png")
