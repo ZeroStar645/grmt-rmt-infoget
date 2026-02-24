@@ -8,7 +8,6 @@ import asyncio
 class EarthMonitorPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-        self.headers = {"User-Agent": "Mozilla/5.0..."}
 
     async def _get_img_node(self, client: httpx.AsyncClient, label: str, url: str):
         """获取图片组件，失败则返回提示文本"""
@@ -24,7 +23,7 @@ class EarthMonitorPlugin(Star):
     @filter.command("rmt")
     async def rmt_now(self, event: AstrMessageEvent, arg: str = ""):
         if arg != "now": return
-        
+        yield event.plain_result("处理图片中，请稍后..")
         async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
             tasks = [
                 self._get_img_node(client, "10~50s", "https://rmt.earth.sinica.edu.tw/rmt_10s.png"),
