@@ -40,7 +40,7 @@ class EarthMonitorPlugin(Star):
                     self._get_img_node(client, "20~50s", f"{self.base_url}rmt_20s.png")
                 ]
                 nodes = await asyncio.gather(*tasks)
-            chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）\n10~50s")]
+            chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）\n10~50s\n")]
             for node in nodes: chain.extend(node)
             yield event.chain_result(chain)
             return
@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"RMT v3 历史报告\n{year_str}{raw_desc}\n0.1Hz")]
+                    chain = [Comp.Plain(f"RMT v3 历史报告\n{year_str}{raw_desc}\n0.1Hz\n")]
                     for node in nodes:
                         chain.extend(node)
 
