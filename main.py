@@ -21,10 +21,10 @@ class EarthMonitorPlugin(Star):
             resp = await client.get(url, timeout=10.0)
             if resp.status_code == 200:
                 # 换行增强补丁：使用 \n + \u3000(全角空格) 强行占据一整行，防止被合并
-                return [Comp.Plain(f"\n\u3000{label}\n"), Comp.Image.fromBytes(resp.content)]
+                return [Comp.Plain(f"\n{label}\n"), Comp.Image.fromBytes(resp.content)]
         except Exception as e:
             logger.error(f"下载 {label} 失败: {e}")
-        return [Comp.Plain(f"\n\u3000{label}\n图片获取失败，可能是此类型下没有图片\n")]
+        return [Comp.Plain(f"\n{label}\n图片获取失败，可能是此类型下没有图片\n")]
 
     @filter.command("rmt")
     async def rmt_handler(self, event: AstrMessageEvent, arg: str = ""):
@@ -33,7 +33,7 @@ class EarthMonitorPlugin(Star):
         
         # --- 1. 处理 rmt now ---
         if "now" in full_text:
-            yield event.plain_result("正在获取实时监控，请稍后..")
+            yield event.plain_result("正在获取实时RMT，请稍后..")
             async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 tasks = [
                     self._get_img_node(client, "", f"{self.base_url}rmt_10s.png"),
@@ -51,7 +51,7 @@ class EarthMonitorPlugin(Star):
             index_match = re.search(r"report\s*(\d+)", full_text)
             index = int(index_match.group(1)) if index_match else 1
             
-            yield event.plain_result(f"🔍 正在检索第 {index} 个历史报告...")
+            yield event.plain_result(f" 正在检索RMT第 {index} 个报告...")
 
             async with httpx.AsyncClient(headers=self.headers) as client:
                 try:
@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"GRMT v3 历史报告\n\u3000{year_str}{raw_desc}\n10s")]
+                    chain = [Comp.Plain(f"GRMT v3 历史报告\n{year_str}{raw_desc}\n10s")]
                     for node in nodes:
                         chain.extend(node)
 
