@@ -37,7 +37,7 @@ class EarthMonitorPlugin(Star):
             async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 tasks = [
                     self._get_img_node(client, "", f"{self.base_url}rmt_10s.png"),
-                    self._get_img_node(client, "20~50s", f"{self.base_url}rmt_20s.png")
+                    self._get_img_node(client, "\n\u300020~50s\n\u3000", f"{self.base_url}rmt_20s.png")
                 ]
                 nodes = await asyncio.gather(*tasks)
             chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）\n\u300010~50s\n\u3000")]
@@ -83,7 +83,7 @@ class EarthMonitorPlugin(Star):
                     # 并发下载图片
                     tasks = [
                         self._get_img_node(client, "", url_10s),
-                        self._get_img_node(client, "0.05Hz", url_20s)
+                        self._get_img_node(client, "\n\u30000.05Hz\n\u3000", url_20s)
                     ]
                     nodes = await asyncio.gather(*tasks)
 
