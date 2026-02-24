@@ -24,7 +24,7 @@ class EarthMonitorPlugin(Star):
                 return [Comp.Plain(f"\n\u3000{label}\n"), Comp.Image.fromBytes(resp.content)]
         except Exception as e:
             logger.error(f"下载 {label} 失败: {e}")
-        return [Comp.Plain(f"\n\u3000{label}\n❌ [图片获取失败]\n")]
+        return [Comp.Plain(f"\n\u3000{label}\n图片获取失败，可能是此类型下没有图片\n")]
 
     @filter.command("rmt")
     async def rmt_handler(self, event: AstrMessageEvent, arg: str = ""):
@@ -36,11 +36,11 @@ class EarthMonitorPlugin(Star):
             yield event.plain_result("正在获取实时监控，请稍后..")
             async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 tasks = [
-                    self._get_img_node(client, "10~50s", f"{self.base_url}rmt_10s.png"),
+                    self._get_img_node(client, "", f"{self.base_url}rmt_10s.png"),
                     self._get_img_node(client, "20~50s", f"{self.base_url}rmt_20s.png")
                 ]
                 nodes = await asyncio.gather(*tasks)
-            chain = [Comp.Plain("RMT v3 当前数据\n（2分钟延迟，仅供参考）")]
+            chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）\n10~50s")]
             for node in nodes: chain.extend(node)
             yield event.chain_result(chain)
             return
@@ -65,11 +65,11 @@ class EarthMonitorPlugin(Star):
                     events = re.findall(pattern, html, re.S)
 
                     if not events:
-                        yield event.plain_result("❌ 解析失败：未能在页面中找到事件列表。")
+                        yield event.plain_result("解析失败：未能在页面中找到事件列表。")
                         return
                     
                     if index > len(events) or index < 1:
-                        yield event.plain_result(f"❌ 范围错误：当前仅有 {len(events)} 个事件。")
+                        yield event.plain_result(f"范围错误：当前仅有 {len(events)} 个事件。")
                         return
 
                     # 提取选定索引的事件数据
@@ -82,7 +82,7 @@ class EarthMonitorPlugin(Star):
 
                     # 并发下载图片
                     tasks = [
-                        self._get_img_node(client, "10s", url_10s),
+                        self._get_img_node(client, "", url_10s),
                         self._get_img_node(client, "20s", url_20s)
                     ]
                     nodes = await asyncio.gather(*tasks)
@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"GRMT v3 历史报告\n\u3000{year_str}{raw_desc}\n")]
+                    chain = [Comp.Plain(f"GRMT v3 历史报告\n\u3000{year_str}{raw_desc}\n10s")]
                     for node in nodes:
                         chain.extend(node)
 
@@ -100,4 +100,4 @@ class EarthMonitorPlugin(Star):
 
                 except Exception as e:
                     logger.error(f"历史报告获取失败: {e}")
-                    yield event.plain_result(f"❌ 运行出错: {str(e)}")
+                    yield event.plain_result(f"运行出错: {str(e)}")
