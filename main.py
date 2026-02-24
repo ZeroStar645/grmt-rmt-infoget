@@ -22,7 +22,7 @@ class EarthMonitorPlugin(Star):
             logger.error(f"图片请求异常: {url}, {e}")
         
         # 失败处理
-        chain.append(Comp.Plain(f"{label}\n❌ [获取图片失败]\n"))
+        chain.append(Comp.Plain(f"{label}\n获取图片失败\n"))
 
     @filter.command("grmt")
     async def grmt_now(self, event: AstrMessageEvent, arg: str = ""):
