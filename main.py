@@ -51,7 +51,7 @@ class EarthMonitorPlugin(Star):
             index_match = re.search(r"report\s*(\d+)", full_text)
             index = int(index_match.group(1)) if index_match else 1
             
-            yield event.plain_result(f" 正在检索RMT第 {index} 个报告...")
+            yield event.plain_result(f"正在检索RMT第 {index} 个报告...")
 
             async with httpx.AsyncClient(headers=self.headers) as client:
                 try:
@@ -83,7 +83,7 @@ class EarthMonitorPlugin(Star):
                     # 并发下载图片
                     tasks = [
                         self._get_img_node(client, "", url_10s),
-                        self._get_img_node(client, "20s", url_20s)
+                        self._get_img_node(client, "0.05Hz", url_20s)
                     ]
                     nodes = await asyncio.gather(*tasks)
 
@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"GRMT v3 历史报告\n{year_str}{raw_desc}\n10s")]
+                    chain = [Comp.Plain(f"RMT v3 历史报告\n{year_str}{raw_desc}\n0.1Hz")]
                     for node in nodes:
                         chain.extend(node)
 
