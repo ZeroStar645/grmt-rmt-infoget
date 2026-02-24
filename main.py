@@ -8,6 +8,9 @@ import asyncio
 class EarthMonitorPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
 
     async def _get_img_node(self, client: httpx.AsyncClient, label: str, url: str):
         """获取图片组件，失败则返回提示文本"""
