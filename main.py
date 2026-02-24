@@ -6,7 +6,7 @@ from astrbot.api.star import Context, Star, register
 import astrbot.api.message_components as Comp
 from astrbot.api import logger
 
-@register("RMT-GRMT", "ZeroStaR", "Moment Tensor Monitoring System", "1.2.0")
+@register("RMT-GRMT", "ZeroStaR", "Moment Tensor Monitoring System", "1.3.0")
 class EarthMonitorPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -20,19 +20,19 @@ class EarthMonitorPlugin(Star):
         try:
             resp = await client.get(url, timeout=10.0)
             if resp.status_code == 200:
-                # 换行补丁：\n + \u3000 (全角空格) 能够强制在很多环境下分行
+                # 换行增强补丁：使用 \n + \u3000(全角空格) 强行占据一整行，防止被合并
                 return [Comp.Plain(f"\n\u3000{label}\n"), Comp.Image.fromBytes(resp.content)]
         except Exception as e:
             logger.error(f"下载 {label} 失败: {e}")
-        return [Comp.Plain(f"\n\u3000{label}\n❌ [获取失败]\n")]
+        return [Comp.Plain(f"\n\u3000{label}\n❌ [图片获取失败]\n")]
 
     @filter.command("rmt")
     async def rmt_handler(self, event: AstrMessageEvent, arg: str = ""):
-        # 统一清理下空格
-        arg_str = arg.strip() if arg else ""
+        # 获取最原始的用户文本，例如 "/rmt report 5"
+        full_text = event.message_str.strip()
         
-        # --- 逻辑 A: rmt now ---
-        if arg_str == "now":
+        # --- 1. 处理 rmt now ---
+        if "now" in full_text:
             yield event.plain_result("正在获取实时监控，请稍后..")
             async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 tasks = [
@@ -45,13 +45,13 @@ class EarthMonitorPlugin(Star):
             yield event.chain_result(chain)
             return
 
-        # --- 逻辑 B: rmt report <int> ---
-        if "report" in arg_str:
-            # 改进的正则提取：匹配 report 后面跟着的数字
-            match = re.search(r"report\s*(\d+)", arg_str)
-            index = int(match.group(1)) if match else 1
+        # --- 2. 处理 rmt report <int> ---
+        if "report" in full_text:
+            # 使用更强大的正则提取数字：匹配 report 后面可能存在的空格及数字
+            index_match = re.search(r"report\s*(\d+)", full_text)
+            index = int(index_match.group(1)) if index_match else 1
             
-            yield event.plain_result(f"正在获取第 {index} 个历史报告，请稍后..")
+            yield event.plain_result(f"🔍 正在检索第 {index} 个历史报告...")
 
             async with httpx.AsyncClient(headers=self.headers) as client:
                 try:
@@ -59,44 +59,45 @@ class EarthMonitorPlugin(Star):
                     resp.encoding = 'utf-8'
                     html = resp.text
 
-                    # 匹配 HTML 中的事件组 (基于你提供的 eq_list.html)
-                    # 匹配：描述, 10s链接, 20s链接
-                    pattern = r'<br><a[^>]*href="[^"]*"[^>]*>(.*?)</a>.*?href="([^"]*)"[^>]*>10s</a>.*?href="([^"]*)"[^>]*>20s</a>'
+                    # 针对 eq_list.html 的结构进行精准匹配
+                    # 匹配组：1.描述文本, 2.10s链接, 3.20s链接
+                    pattern = r'<br><a[^>]*href="([^"]*)"[^>]*>(.*?)</a>.*?href="([^"]*)"[^>]*>10s</a>.*?href="([^"]*)"[^>]*>20s</a>'
                     events = re.findall(pattern, html, re.S)
 
                     if not events:
-                        yield event.plain_result("❌ 错误：无法从页面解析到事件列表。")
+                        yield event.plain_result("❌ 解析失败：未能在页面中找到事件列表。")
                         return
                     
                     if index > len(events) or index < 1:
-                        yield event.plain_result(f"❌ 索引范围错误：当前共有 {len(events)} 个事件。")
+                        yield event.plain_result(f"❌ 范围错误：当前仅有 {len(events)} 个事件。")
                         return
 
-                    # 获取特定索引的事件
-                    selected = events[index - 1]
-                    raw_desc = selected[0].replace('&nbsp;', ' ').strip()
-                    url_10s = selected[1] if selected[1].startswith("http") else self.base_url + selected[1]
-                    url_20s = selected[2] if selected[2].startswith("http") else self.base_url + selected[2]
+                    # 提取选定索引的事件数据
+                    selected_data = events[index - 1]
+                    raw_desc = selected_data[1].replace('&nbsp;', ' ').strip()
+                    # 补全 URL
+                    def fix_url(u): return u if u.startswith("http") else self.base_url + u
+                    url_10s = fix_url(selected_data[2])
+                    url_20s = fix_url(selected_data[3])
 
-                    # 下载图片
+                    # 并发下载图片
                     tasks = [
                         self._get_img_node(client, "10s", url_10s),
                         self._get_img_node(client, "20s", url_20s)
                     ]
                     nodes = await asyncio.gather(*tasks)
 
-                    # 尝试从 URL 中提取年份
+                    # 提取年份
                     year_match = re.search(r'/(\d{4})/', url_10s)
-                    year_prefix = f"{year_match.group(1)}/" if year_match else ""
+                    year_str = f"{year_match.group(1)}/" if year_match else ""
                     
-                    # 构造最终链
-                    # 在开头也加入全角空格
-                    chain = [Comp.Plain(f"GRMT v3 历史报告\n\u3000{year_prefix}{raw_desc}\n")]
+                    # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
+                    chain = [Comp.Plain(f"GRMT v3 历史报告\n\u3000{year_str}{raw_desc}\n")]
                     for node in nodes:
                         chain.extend(node)
 
                     yield event.chain_result(chain)
 
                 except Exception as e:
-                    logger.error(f"Report 指令执行失败: {e}")
-                    yield event.plain_result(f"❌ 发生异常: {str(e)}")
+                    logger.error(f"历史报告获取失败: {e}")
+                    yield event.plain_result(f"❌ 运行出错: {str(e)}")
