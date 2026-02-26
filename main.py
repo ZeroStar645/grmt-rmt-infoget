@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"RMT v3 历史报告\u200b{year_str}{raw_desc}\u200b0.1Hz\n\u200b")]
+                    chain = [Comp.Plain(f"RMT v3 历史报告\u200b{year_str}{raw_desc}\n\u200b0.1Hz\n\u200b")]
                     for node in nodes:
                         chain.extend(node)
 
