@@ -21,10 +21,10 @@ class EarthMonitorPlugin(Star):
             resp = await client.get(url, timeout=10.0)
             if resp.status_code == 200:
                 # 换行增强补丁：使用 \n + \u3000(全角空格) 强行占据一整行，防止被合并
-                return [Comp.Plain(f"\n\u3000{label}\n\u3000"), Comp.Image.fromBytes(resp.content)]
+                return [Comp.Plain(f"\n\u200b{label}\n\u200b"), Comp.Image.fromBytes(resp.content)]
         except Exception as e:
             logger.error(f"下载 {label} 失败: {e}")
-        return [Comp.Plain(f"\n\u3000{label}\n\u3000图片获取失败，可能是此类型下没有图片\n")]
+        return [Comp.Plain(f"\n\u200b{label}\n\u200b图片获取失败，可能是此类型下没有图片\n")]
 
     @filter.command("rmt")
     async def rmt_handler(self, event: AstrMessageEvent, arg: str = ""):
@@ -37,7 +37,7 @@ class EarthMonitorPlugin(Star):
             async with httpx.AsyncClient(headers=self.headers, follow_redirects=True) as client:
                 tasks = [
                     self._get_img_node(client, "", f"{self.base_url}rmt_10s.png"),
-                    self._get_img_node(client, "\n\u300020~50s\n\u3000", f"{self.base_url}rmt_20s.png")
+                    self._get_img_node(client, "\n\u200b20~50s\n\u200b", f"{self.base_url}rmt_20s.png")
                 ]
                 nodes = await asyncio.gather(*tasks)
             chain = [Comp.Plain("RMT v3 当前数据（2分钟延迟，仅供参考）\n\u300010~50s\n\u3000")]
@@ -83,7 +83,7 @@ class EarthMonitorPlugin(Star):
                     # 并发下载图片
                     tasks = [
                         self._get_img_node(client, "", url_10s),
-                        self._get_img_node(client, "\n\u30000.05Hz\n\u3000", url_20s)
+                        self._get_img_node(client, "\n\u200b0.05Hz\n\u200b", url_20s)
                     ]
                     nodes = await asyncio.gather(*tasks)
 
@@ -92,7 +92,7 @@ class EarthMonitorPlugin(Star):
                     year_str = f"{year_match.group(1)}/" if year_match else ""
                     
                     # 构造最终链，开头加入 \u3000 确保页眉与后续内容的间距
-                    chain = [Comp.Plain(f"RMT v3 历史报告\n\u3000{year_str}{raw_desc}\n\u30000.1Hz\n\u3000")]
+                    chain = [Comp.Plain(f"RMT v3 历史报告\n\u200b{year_str}{raw_desc}\n\u30000.1Hz\n\u200b")]
                     for node in nodes:
                         chain.extend(node)
 
